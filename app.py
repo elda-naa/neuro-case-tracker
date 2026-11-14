@@ -5,12 +5,16 @@ import cv2
 import librosa
 import tempfile
 import os
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, f1_score
 
 st.set_page_config(page_title="Eunoia", page_icon="🧠", layout="wide")
 
 st.title("🧠 Eunoia — Neurological Case Tracker")
 st.markdown("Early Screening & 7-Day Personal Baseline Monitoring | *Veritas AI Hackathon Prototype*")
-st.info("⚠️ Disclaimer: This prototype is an educational screening aid for tracking longitudinal changes and does not provide medical diagnoses.")
+st.info("⚠️ Disclaimer: This prototype is an educational screening aid for tracking day-to-day changes and does not provide medical advice or diagnoses.")
 
 if "baseline_df" not in st.session_state:
     st.session_state.baseline_df = pd.DataFrame({
@@ -20,11 +24,12 @@ if "baseline_df" not in st.session_state:
         "Vocal Stability (%)": (92, 93, 91, 92, 94, 93, 92)
     })
 
-tab1, tab2, tab3, tab4 = st.tabs((
+tab1, tab2, tab3, tab4, tab5 = st.tabs((
     "🏃 1. Movement & Balance",
     "👁️ 2. Vision & Eye Check",
     "🎙️ 3. Voice & Speech",
-    "🏥 4. 7-Day Hospital Dashboard"
+    "🏥 4. 7-Day Hospital Dashboard",
+    "📊 5. Model & Baseline Results"
 ))
 
 with tab1:
@@ -79,7 +84,7 @@ with tab1:
                 with col1:
                     if sample_frame is not None:
                         st.image(sample_frame, caption="AI Motion Centroid & Sway Tracking", use_container_width=True)
-                with col2:
+                        with col2:
                     st.metric("Overall Motor Stability Score", f"{stability_score}%", delta=f"{stability_score - 95}% vs 7-Day Norm")
                     st.metric("Micro-Tremor Index (Vertical)", f"{tremor_std:.2f} px/frame")
                     st.metric("Postural Sway Index (Horizontal)", f"{sway_std:.2f} px/frame")
@@ -133,7 +138,7 @@ with tab2:
                 eye_heights.append(eh)
         
         if len(eye_heights) >= 2:
-            symmetry_pct = int((min(eye_heights[0], eye_heights[1]) / max(eye_heights[0], eye_heights[1])) * 100)
+            symmetry_pct = int((min(eye_heights, eye_heights) / max(eye_heights, eye_heights)) * 100)
         elif len(faces) > 0:
             symmetry_pct = 96
         else:
@@ -151,7 +156,7 @@ with tab2:
                     st.warning("Noticeable eyelid asymmetry detected compared to baseline.")
         else:
             st.warning("Face not detected clearly. Ensure good lighting and face the camera directly.")
-with tab3:
+            with tab3:
     st.header("10-Second Voice & Speech Biomarker Check")
     st.write("Analyzes Vocal Microtremors, Pitch Jitter, Shimmer, and Speech Pacing (Early Parkinson's / ALS / Aphasia screening).")
     st.info("🗣️ Prompt: Press record and say: *'Today is a sunny day, and I am testing my voice clarity for ten seconds.'* (or sustain an *'Ahhhh'* sound).")
@@ -189,9 +194,3 @@ with tab3:
 with tab4:
     st.header("🏥 7-Day Personal Baseline & Clinical Export")
     st.write("Tracks deviations from the patient's established 7-day neurological norm for physician review.")
-    
-    st.line_chart(st.session_state.baseline_df.set_index("Day"))
-    st.dataframe(st.session_state.baseline_df, use_container_width=True)
-    
-    csv = st.session_state.baseline_df.to_csv(index=False).encode('utf-8')
-    st.download_button("📥 Export Patient Report for Hospital EHR (CSV)", data=csv, file_name="eunoia_patient_report.csv", mime="text/csv")
