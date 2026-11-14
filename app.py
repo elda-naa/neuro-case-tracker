@@ -6,9 +6,9 @@ import librosa
 import tempfile
 import os
 
-st.set_page_config(page_title="NeuroTrack AI", page_icon="🧠", layout="wide")
+st.set_page_config(page_title="Eunoia", page_icon="🧠", layout="wide")
 
-st.title("🧠 NeuroTrack AI — Neurological Case Tracker")
+st.title("🧠 Eunoia — Neurological Case Tracker")
 st.markdown("Early Screening & 7-Day Personal Baseline Monitoring | *Veritas AI Hackathon Prototype*")
 st.info("⚠️ Disclaimer: This prototype is an educational screening aid for tracking longitudinal changes and does not provide medical diagnoses.")
 
@@ -194,3 +194,4 @@ with tab4:
     st.dataframe(st.session_state.baseline_df, use_container_width=True)
     
     csv = st.session_state.baseline_df.to_csv(index=False).encode('utf-8')
+    st.download_button("📥 Export Patient Report for Hospital EHR (CSV)", data=csv, file_name="eunoia_patient_report.csv", mime="text/csv")
